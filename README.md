@@ -1,5 +1,5 @@
-# Fukuhara Seminars Assignment
-## Week01 10/06
+# Fukuhara Seminar Assignment
+## Week-01: 10/06
 Before you run the code in file:23_10_06_week-01
 it is requred to install pandas_data reader by run the code below in the Terminal
 
@@ -12,3 +12,6 @@ Also if you are using Anaconda as Python manager, you need to activate the pytho
 ```
 conda activate [YOUR PYTHON ENVIRONMENT NAME]
 ```
+---
+
+## Week-02: 10/XX
