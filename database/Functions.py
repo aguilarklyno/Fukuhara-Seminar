@@ -1,10 +1,20 @@
+# 基礎データ分析
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
+import seaborn as sns
+
+# 応用データ分析
 from statsmodels.tsa.stattools import adfuller
+from statsmodels.tsa.api import VAR
+import statsmodels.api as sm
+
 # インタラクション用ライブラリ
 import ipywidgets as widgets
-from IPython.display import display, clear_output
+from ipywidgets import interact, IntSlider
+from IPython.display import HTML, display, clear_output
+
+
 
 
 '''
@@ -33,26 +43,43 @@ from IPython.display import display, clear_output
     〈解説〉
         複数の画像(グラフなど)を表示させる関数をボタン切り替えで表示
     〈使用例〉
-        display_functions_with_buttons({
+        display_images_with_buttons({
             'ボタンタイトル1': lambda: グラフ表示関数1(引数1, 引数2, 引数3),
             'ボタンタイトル2': lambda: グラフ表示関数2(引数1, 引数2, 引数3, 引数4),
             'ボタンタイトル3': lambda: グラフ表示関数3(引数1, 引数2),
             })
 
-
-❸ 
+❸ plot_histogram(dataframe, title, xlabel, ylabel, column_name):
     〈引数解説〉
-
+        dataframe: データフレーム
+        title: 文字列
+        xlabel: 文字列
+        ylabel: 文字列
+        column_name: 文字列
     〈使用例〉
+        display_histogram(df, 'ヒストグラムのタイトル', 'X軸のタイトル', 'Y軸のタイトル', 'カラム名')
 
-❸ 
+❸ perform_adf_test_on_dataframe(df, alpha=0.05)
     〈引数解説〉
-
+        ADF検定をします
     〈使用例〉
+        df_results = perform_adf_test_on_dataframe(df_stock_mo)
+        display(df_results)
+
+❸ remove_trend_log(dataframe, ['Column1', 'Column2'])
+    〈引数解説〉
+        対数差分処理を行います
+    〈使用例〉
+        df_log_diff = remove_trend_log(dataframe, ['Column1', 'Column2'])
+
+❸ display_order_selection(model, maxlags)
+    〈引数解説〉
+        VARの次数を探す
+    〈使用例〉
+        model = sm.tsa.VAR(your_dataframe).fit(maxlags=your_maxlags)
+        display_order_selection_with_interact(model, 20)
 
 '''
-
-
 
 def plot_stock_prices(title, dataframe, selected_columns, xlabel="Date", ylabel="Price", figsize=(20, 6)):
     """
@@ -70,16 +97,11 @@ def plot_stock_prices(title, dataframe, selected_columns, xlabel="Date", ylabel=
     for column in selected_columns:
         ax.plot(dataframe.index, dataframe[column], label=column)
 
-    ax.set_title(f'Stock Price over Time ({title})')
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
-    ax.legend()
-    ax.grid(True, which='major', linestyle='--', linewidth=0.5, axis="y")
-    ax.grid(False, axis="x")
-    for spine in ax.spines.values():
-        spine.set_color('gray')
-    ax.xaxis.set_major_locator(plt.MaxNLocator(nbins=12))
-    plt.style.use('_mpl-gallery')
+    ax.set_title(title) #タイトルの設定
+    ax.set_xlabel(xlabel) #xラベルタイトルの設定
+    ax.set_ylabel(ylabel) #yラベルタイトルの設定
+    ax.legend() # 凡例の追加
+    ax.xaxis.set_major_locator(plt.MaxNLocator(nbins=12)) # x軸のメジャー数の上限を12個に設定
     plt.tight_layout()
     plt.show()
 
@@ -93,17 +115,23 @@ def display_dataframes_with_buttons(dataframes_dict):
     """
 
     buttons = []
+    rows = []  # ボタンの行を保持するリスト
 
-    # 各データフレームに対応するボタンを生成
+    # 各データフレームに対応するボタンを生成（横幅を30%に設定）
     for name in dataframes_dict.keys():
-        button = widgets.Button(description=name)
+        button = widgets.Button(description=name, layout=widgets.Layout(width='40%', margin='5px'))
         buttons.append(button)
+
+    # 1行当たり2つのボタンを中央揃えで配置
+    for i in range(0, len(buttons), 2):
+        row = widgets.HBox(buttons[i:i+2], layout=widgets.Layout(justify_content='center'))
+        rows.append(row)
 
     # ボタンのイベントハンドラー
     def on_button_clicked(b):
         clear_output(wait=True)
-        for button in buttons:
-            display(button)
+        for row in rows:
+            display(row)
         display(dataframes_dict[b.description])
 
     # 各ボタンにイベントハンドラーを割り当てる
@@ -111,8 +139,8 @@ def display_dataframes_with_buttons(dataframes_dict):
         button.on_click(on_button_clicked)
 
     # すべてのボタンを表示
-    for button in buttons:
-        display(button)
+    for row in rows:
+        display(row)
 
 def display_images_with_buttons(functions_dict):
     """
@@ -124,17 +152,23 @@ def display_images_with_buttons(functions_dict):
     """
 
     buttons = []
+    rows = []  # ボタンの行を保持するリスト
 
-    # 各関数に対応するボタンを生成
+    # 各関数に対応するボタンを生成（横幅を40%に設定）
     for title in functions_dict.keys():
-        button = widgets.Button(description=title)
+        button = widgets.Button(description=title, layout=widgets.Layout(width='40%', margin='5px'))
         buttons.append(button)
+
+    # 1行当たり2つのボタンを中央揃えで配置
+    for i in range(0, len(buttons), 2):
+        row = widgets.HBox(buttons[i:i+2], layout=widgets.Layout(justify_content='center'))
+        rows.append(row)
 
     # ボタンのイベントハンドラー
     def on_button_clicked(b):
         clear_output(wait=True)
-        for button in buttons:
-            display(button)
+        for row in rows:
+            display(row)
         functions_dict[b.description]()
 
     # 各ボタンにイベントハンドラーを割り当てる
@@ -142,59 +176,113 @@ def display_images_with_buttons(functions_dict):
         button.on_click(on_button_clicked)
 
     # すべてのボタンを表示
-    for button in buttons:
-        display(button)
+    for row in rows:
+        display(row)
 
-
-def clean_dataframe(df):
+def plot_histogram(dataframe, title, xlabel, ylabel, column_name):
     """
-    Cleans the dataframe by dropping NaN and infinite values.
+    指定されたデータフレームの指定されたカラムに対するヒストグラムを表示する関数。
+    Seabornを使用してグラフのスタイルを改善します。
 
-    Parameters:
-    - df: pd.DataFrame, the dataframe to be cleaned.
-    
-    Returns:
-    - pd.DataFrame, cleaned dataframe.
+    引数:
+    dataframe: pd.DataFrame, データフレーム。
+    title: str, グラフのタイトル。
+    xlabel: str, x軸のラベルのタイトル。
+    ylabel: str, y軸のラベルのタイトル。
+    column_name: str, データのカラム名。
     """
-    df = df.replace([np.inf, -np.inf], np.nan).dropna()
-    return df
-
-def adf_test(series, alpha=0.05):
-    """
-    Performs the Augmented Dickey-Fuller test on a time series.
-
-    Parameters:
-    - series: pd.Series, the time series to test.
-    - alpha: float, significance level for the test.
-
-    Returns:
-    - dict, results of the ADF test.
-    """
-    if series.isnull().sum() > 0 or np.isinf(series).sum() > 0:
-        raise ValueError("Series contains NaN or infinite values")
-    
-    result = adfuller(series, autolag='AIC')
-    critical_values = {f'Critical Value ({key})': value for key, value in result[4].items()}
-    return {
-        "ADF Test Statistic": result[0],
-        "P-Value": result[1],
-        "# Lags Used": result[2],
-        "# Observations": result[3],
-        "Result": "Stationary" if result[1] <= alpha else "Not Stationary",
-        **critical_values
-    }
+    # ヒストグラムを描画
+    plt.figure(figsize=(10, 6))
+    sns.histplot(dataframe[column_name],
+                kde=True,
+                bins='auto',
+                # cumulative='True',
+                )
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.show()
 
 def perform_adf_test_on_dataframe(df, alpha=0.05):
-    """
-    Performs the ADF test on each column of the dataframe except 'Date'.
-
-    Parameters:
-    - df: pd.DataFrame, the dataframe to test.
-    - alpha: float, significance level for the test.
-
-    Returns:
-    - pd.DataFrame, results of the ADF tests.
-    """
-    df = clean_dataframe(df)
-    results = {col: adf_test(df[col], alpha) for col in df.columns if col != 'Date'}
+    # NaNの値を確認し、存在する場合はドロップ
+    df.dropna(inplace=True)
+    
+    # 無限の値を確認し、存在する場合はNaNで置き換えてからドロップ
+    df.replace([np.inf, -np.inf], np.nan, inplace=True)
+    df.dropna(inplace=True)
+    
+    def adf_test(series):
+        # 再度、シリーズにNaNまたは無限の値がないことを確認
+        if series.isnull().sum() > 0 or np.isinf(series).sum() > 0:
+            raise ValueError(f"Series contains NaN or infinite values")
+            
+        result = adfuller(series, autolag='AIC')
+        test_statistic = result[0]
+        p_value = result[1]
+        lags_used = result[2]
+        nobs = result[3]
+        critical_values = result[4]
+        result_dict = {
+            "ADF Test Statistic": test_statistic,
+            "P-Value": p_value,
+            "# Lags Used": lags_used,
+            "# Observations": nobs,
+            "Result": "Stationary" if p_value <= alpha else "Not Stationary"
+        }
+        for key, value in critical_values.items():
+            result_dict[f'Critical Value ({key})'] = value
+        return result_dict
+    
+    results = {col: adf_test(df[col]) for col in df.columns if col != 'Date'}
     return pd.DataFrame(results).T
+
+def remove_trend_log(data, selected_columns=None) -> pd.DataFrame:
+    """
+    指定されたDataFrameまたはSeriesに対して対数差分を計算します。
+    
+    パラメーター:
+    - data: pd.DataFrame or pd.Series, 一つ以上の時系列列を持つ入力データ。
+    - selected_columns: list, 対数差分を計算する列。Noneの場合、'Date'を除く全ての列に対して計算します。
+
+    戻り値:
+    - pd.DataFrame or pd.Series, 元のデータの対数差分。
+    """
+    
+    # dataがSeriesの場合
+    if isinstance(data, pd.Series):
+        return np.log(data).diff().dropna()
+    
+    # dataがDataFrameの場合
+    elif isinstance(data, pd.DataFrame):
+        
+        # 特定の列が選択されていない場合は、'Date'を除く全ての列を選択
+        if selected_columns is None:
+            selected_columns = [col for col in data.columns if col != 'Date']
+        
+        # 選択された各列に対して対数差分を適用
+        for col in selected_columns:
+            data[col] = np.log(data[col]).diff()
+        
+        return data.dropna()
+    
+    else:
+        raise ValueError("入力データはpandasのDataFrameまたはSeriesでなければなりません")
+
+def display_order_selection(model, maxlags):
+    """
+    Automatically display the VAR model order selection using interactive widgets.
+    
+    Parameters:
+    model : VAR model instance
+        An instance of the VAR model from statsmodels.
+    maxlags : int
+        The maximum number of lags to consider for the VAR model order selection.
+    """
+    def display_interact(maxlags):
+        results = model.select_order(maxlags=maxlags)
+        summary_html = results.summary().as_html()
+        center_aligned_html = f"<div style='display: flex; justify-content: center;'>{summary_html}</div>"
+        display(HTML(center_aligned_html))
+    
+    # スライダーを作成し、display_order_selection関数を動的に実行する
+    interact(display_interact, maxlags=IntSlider(min=1, max=maxlags, step=1, value=min(5, maxlags)))
