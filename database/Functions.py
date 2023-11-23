@@ -8,6 +8,7 @@ import seaborn as sns
 from statsmodels.tsa.stattools import adfuller
 from statsmodels.tsa.api import VAR
 import statsmodels.api as sm
+from arch import arch_model
 
 # インタラクション用ライブラリ
 import ipywidgets as widgets
@@ -78,6 +79,16 @@ from IPython.display import HTML, display, clear_output
     〈使用例〉
         model = sm.tsa.VAR(your_dataframe).fit(maxlags=your_maxlags)
         display_order_selection_with_interact(model, 20)
+
+❸ # garch_volatility_df = calculate_garch_volatility(your_dataframe)
+    〈引数解説〉
+        各列にGARCHモデルを適用し、条件付きボラティリティを計算する関数。
+        :param dataframe: データフレーム（各列が時系列データ）
+        :return: 条件付きボラティリティのデータフレーム
+    〈使用例〉
+        garch_volatility_df = calculate_garch_volatility(your_dataframe)
+
+
 
 '''
 
@@ -286,3 +297,20 @@ def display_order_selection(model, maxlags):
     
     # スライダーを作成し、display_order_selection関数を動的に実行する
     interact(display_interact, maxlags=IntSlider(min=1, max=maxlags, step=1, value=min(5, maxlags)))
+
+def calculate_garch_volatility(dataframe):
+    volatility_df = pd.DataFrame(index=dataframe.index)
+
+    for column in dataframe.columns:
+        # ログ収益率の計算
+        returns = 100 * dataframe[column].pct_change().dropna()
+
+        # GARCHモデルの適用
+        model = arch_model(returns, vol='Garch', p=1, q=1)
+        model_fit = model.fit(disp='off')  # 計算の詳細を表示しない
+
+        # 条件付きボラティリティの計算
+        volatility_df[column] = model_fit.conditional_volatility
+
+    # NaNを含む行を削除
+    return volatility_df.dropna()
